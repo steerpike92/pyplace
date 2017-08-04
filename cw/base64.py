@@ -129,6 +129,17 @@ def from_base_64(string):
     if pad_chars:
         string=string[: -pad_chars]+'A'*pad_chars
 
+    final_4_count = len(string) % 4
+    if final_4_count == 1:
+        pad_chars += 2
+        string += 'AA'
+    if final_4_count == 2:
+        pad_chars += 2
+        string += 'AA'
+    if final_4_count == 3:
+        pad_chars += 1
+        string += 'A'
+
 
     int6_list=s64_to_int6_list(string)
 
