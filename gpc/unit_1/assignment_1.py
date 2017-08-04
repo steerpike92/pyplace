@@ -274,7 +274,28 @@ def shuffle(L):
     >>> shuffle([1, 2, 3, 4, 5, 6])
     [1, 4, 2, 5, 3, 6]
     '''
-    #return reduce(lambda n, m: n + m, [list(tup) for tup in
+    return reduce(lambda n, m: n + m, [list(tup) for tup in
+                   zip(L[0: len(L) / 2], L[len(L) / 2:])])
+    #return reduce(operator.concat, [list(t) for t in
     #                zip(L[0: len(L) / 2], L[len(L) / 2:])])
-    return reduce(operator.concat, [list(t) for t in
-                    zip(L[0: len(L) / 2], L[len(L) / 2:])])
+
+
+def count_match_index(L):
+    '''
+    Use enumerate and other skills to return the count of the number
+    of items in the list whose value equals its index.
+
+    Parameters
+    ----------
+    L : {list} of {int}
+
+    Returns
+    -------
+    int : {int}
+
+    Example
+    -------
+    >>> count_match_index([0, 2, 2, 3, 6, 5])
+    4
+    '''
+    return sum([tup[0]==tup[1] for tup in enumerate(L)])
