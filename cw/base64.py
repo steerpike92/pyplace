@@ -1,53 +1,5 @@
 import numpy as np
 
-
-def s_to_bytearray(s):
-    '''
-    >>> s_to_bytearray('a5')
-    [97, 53]
-    '''
-    return list(bytearray(s))
-
-
-def byte_to_bits(num):
-    '''
-    >>> n = 5
-    >>> byte_to_bits(n)
-    [0, 0, 0, 0, 0, 1, 0, 1]
-    '''
-    bit_list=[]
-    for power in range(7,-1,-1):
-        if num>=2**power:
-            bit_list.append(1)
-            num-=2**power
-        else:
-            bit_list.append(0)
-    return bit_list
-
-def bytearray_to_bit_pattern(b_array):
-    '''
-    >>> bytearray_to_bit_pattern([5,1])
-    [0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]
-    '''
-    bit_list=[]
-    for num in b_array:
-        bit_list+=byte_to_bits(num)
-    return bit_list
-
-
-def six_bit_int(bits):
-    '''
-    >>> six_bit_int([1,0,0,0,0,1])
-    33
-    '''
-    i = 0
-    power = 5
-    for bit in bits:
-        i += bit * 2**power
-        power -= 1
-    return i
-
-
 enc64 = {
     0:	'A',	16:	'Q',	32:	'g',	48:	'w',
     1:	'B',	17:	'R',	33:	'h',	49:	'x',
@@ -69,6 +21,65 @@ enc64 = {
 
 dec64 = {v: k for k, v in enc64.iteritems()}
 
+
+def s_to_bytelist(s):
+    '''
+    >>> s_to_bytelist('a5')
+    [97, 53]
+    '''
+    return list(bytearray(s))
+
+
+def s64_to_int6_list(s):
+    '''
+    >>> s='aA'
+    >>> s64_to_int6_list(s)
+    [26, 0]
+    '''
+    return [dec64[c] for c in s]
+
+
+def intn_to_bits(num, n):
+    '''
+    >>> num = 5
+    >>> intn_to_bits(num, 8)
+    [0, 0, 0, 0, 0, 1, 0, 1]
+    '''
+    bit_list=[]
+    for power in range(n-1,-1,-1):
+        if num>=2**power:
+            bit_list.append(1)
+            num-=2**power
+        else:
+            bit_list.append(0)
+    return bit_list
+
+def intn_list_to_bit_pattern(intn_list, n):
+    '''
+    >>> intn_list_to_bit_pattern([5,1], 8)
+    [0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]
+    '''
+    bit_list=[]
+    for num in intn_list:
+        bit_list+=intn_to_bits(num, n)
+    return bit_list
+
+
+def bits_2_intn(bits,n):
+    '''
+    >>> bits_2_intn([1,0,0,0,0,1], 6)
+    33
+    '''
+    i = 0
+    power = n-1
+    for bit in bits:
+        i += bit * 2**power
+        power -= 1
+    return i
+
+
+
+
 def to_base_64(string):
     '''
     >>> s = "this is a string!!"
@@ -76,12 +87,12 @@ def to_base_64(string):
     >>> to_base_64(s)
     'dGhpcyBpcyBhIHN0cmluZyEh'
     '''
-    byte_array=s_to_bytearray(string)
+    byte_list=s_to_bytelist(string)
 
-    bit_array=bytearray_to_bit_pattern(byte_array)
+    bit_array=intn_list_to_bit_pattern(byte_list, 8)
 
-    #padding
-    byte_count=len(byte_array)
+    #count padding
+    byte_count=len(byte_list)
     over_chars=byte_count % 3
     if over_chars==1:
         pad_chars=2
@@ -89,15 +100,20 @@ def to_base_64(string):
         pad_chars=1
     else:
         pad_chars=0
+
+    #pad final byte
     bit_array += [0, 0] * pad_chars
 
     #reshaping
     bit_array = np.array(bit_array)
     six_bit_arrays=bit_array.reshape(bit_array.size/6,6)
     six_bit_lists = [list(arr) for arr in six_bit_arrays]
-    int6s=[six_bit_int(bits) for bits in six_bit_lists]
+    int6s=[bits_2_intn(bits, 6) for bits in six_bit_lists]
     out_str=''.join([enc64[int6] for int6 in int6s])
+
+    #add padding char to out_str
     out_str+='='*pad_chars
+
     return out_str
 
 
@@ -108,9 +124,34 @@ def from_base_64(string):
     >>> from_base_64(e)
     'this is a string!!'
     '''
-    pass
+    #count padding and change to 0 int6 char
+    pad_chars=string.count('=')
+    if pad_chars:
+        string=string[: -pad_chars]+'A'*pad_chars
 
+
+    int6_list=s64_to_int6_list(string)
+
+    bit_list=intn_list_to_bit_pattern(int6_list, 6)
+
+    #reshaping
+    bit_array=np.array(bit_list)
+    eight_bit_arrays=bit_array.reshape(bit_array.size/8,8)
+    eight_bit_lists=[list(bit_arr) for bit_arr in eight_bit_arrays]
+    int8_list= [bits_2_intn(bits, 8) for bits in eight_bit_lists]
+    out_str = ''.join([chr(int8) for int8 in int8_list])
+
+    #cut padding
+    if pad_chars:
+        out_str = out_str[: -pad_chars]
+
+    return out_str
 
 if __name__ == "__main__":
-    s = "this is a string!!!!!"
-    print to_base_64(s)
+
+    s = "I'm just a lonely string!!!"
+    print s
+    s64 = to_base_64(s)
+    print s64
+    s_rec= from_base_64(s64)
+    print s_rec
