@@ -1,0 +1,27 @@
+createdb
+
+psql animalshp
+
+CREATE TABLE animals(
+species varchar(80),
+vertebrate_class varchar(80),
+appearancce varchar(80),
+num_leg int
+);
+
+copy animals from '/home/zack/PyPlace/gpc/data/animals.csv' CSV HEADER;
+
+--------------
+
+psql
+\l  -- list databases
+\dt -- list tables
+\d+ tablename -- describe table
+\q -- exit thing
+
+psql -f beds.sql -- recover dump into default database
+
+
+select min(to_date(bed_census_date, 'MM/DD/YYYY'))
+from beds
+where facility_id = '6057';
