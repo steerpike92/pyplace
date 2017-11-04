@@ -164,16 +164,23 @@ def make_random_story(f, n_gram=2, num_words=200):
     n_gram_funcs={1: unigrams, 2: bigrams, 3: trigrams}
     dic = n_gram_funcs[n_gram](f)
     story_tuple = random.choice(dic.keys())
-    for i in range(n_gram, num_words):
-        
+    for i in range(n_gram, num_words+1):
+        key = story_tuple[i-n_gram:]
+        choices = dic[key]
+        story_tuple += (random.choice(choices),)
+    story = ' '.join(story_tuple)
+    return story
+
 
 
 # This code will be run if you on the command line run: python assignment_2a.py
 if __name__ == '__main__':
     # open the 'alice.txt' file, in the data directory
     # call the 'make_random_story' to print a 100 word long story based on bigrams
-    with open( '../data/alice.txt' ) as f:
+    filename, n_gram, num_words = sys.argv[1:]
+    filepath= '../data/' + filename
+    n_gram, num_words = int(n_gram), int(num_words)
+    with open( filepath ) as f:
         random.seed('Is the looking-glass is half full or half-empty?')
-        with open('../data/alice.txt') as f:
-            story = make_random_story(f, 3, 10)
-            print story
+        story = make_random_story(f, n_gram, num_words)
+        print story
